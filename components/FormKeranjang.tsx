@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -9,6 +8,15 @@ import { ambilKeranjang, simpanKeranjang } from "@/data/keranjang";
 export default function FormKeranjang({ item }: { item: Menu }) {
   const [jumlah, setJumlah] = useState(1);
   const [pesan, setPesan] = useState("");
+
+  const mentokAtas = jumlah >= item.stok;
+  const mentokBawah = jumlah <= 1;
+
+  function ubahJumlah(nilai: number) {
+    if (Number.isNaN(nilai)) return;
+    setJumlah(Math.min(item.stok, Math.max(1, Math.round(nilai))));
+    setPesan("");
+  }
 
   function tambah(e: FormEvent) {
     e.preventDefault();
@@ -43,14 +51,19 @@ export default function FormKeranjang({ item }: { item: Menu }) {
 
   return (
     <form onSubmit={tambah} className="mt-4 flex flex-col gap-3">
-      <label className="flex items-center gap-3">
+      <div className="flex items-center gap-3">
         <span>Jumlah</span>
 
         <div className="flex items-center overflow-hidden rounded border border-violet-200">
           <button
             type="button"
-            onClick={() => setJumlah((j) => Math.max(1, j - 1))}
-            className="px-3 py-2 hover:bg-violet-100"
+            onClick={() => ubahJumlah(jumlah - 1)}
+            disabled={mentokBawah}
+            className={
+              mentokBawah
+                ? "cursor-not-allowed bg-slate-100 px-3 py-2 text-slate-300"
+                : "px-3 py-2 hover:bg-violet-100"
+            }
           >
             −
           </button>
@@ -58,24 +71,29 @@ export default function FormKeranjang({ item }: { item: Menu }) {
           <input
             type="number"
             min={1}
+            max={item.stok}
+            aria-label="Jumlah"
             value={jumlah}
-            onChange={(e) => setJumlah(Number(e.target.value))}
+            onChange={(e) => ubahJumlah(Number(e.target.value))}
             className="w-16 border-x border-violet-200 px-2 py-2 text-center outline-none"
           />
 
           <button
             type="button"
-            onClick={() => setJumlah((j) => j + 1)}
-            className="px-3 py-2 hover:bg-violet-100"
+            onClick={() => ubahJumlah(jumlah + 1)}
+            disabled={mentokAtas}
+            className={
+              mentokAtas
+                ? "cursor-not-allowed bg-slate-100 px-3 py-2 text-slate-300"
+                : "px-3 py-2 hover:bg-violet-100"
+            }
           >
             +
           </button>
         </div>
-      </label>
+      </div>
 
-      <p className="font-semibold">
-        Total: {rupiah(item.harga * jumlah)}
-      </p>
+      <p className="font-semibold">Total: {rupiah(item.harga * jumlah)}</p>
 
       <button
         type="submit"
