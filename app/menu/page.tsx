@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { menu } from "@/data/menu";
 import KartuMenu from "@/components/KartuMenu";
+import MenuTidakAda from "./[id]/not-found";
 
 export default function Katalog() {
   const [cari, setCari] = useState("");
@@ -60,7 +61,7 @@ export default function Katalog() {
       </div>
 
       {hasil.length === 0 ? (
-        <p className="text-slate-500">Menu tidak ditemukan.</p>
+        <MenuTidakAda />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {hasil.map((m) => (
