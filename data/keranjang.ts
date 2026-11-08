@@ -10,4 +10,5 @@ export function ambilKeranjang(): ItemKeranjang[] {
 
 export function simpanKeranjang(keranjang: ItemKeranjang[]) {
   localStorage.setItem(KUNCI, JSON.stringify(keranjang));
+  window.dispatchEvent(new Event("keranjang-berubah"));
 }

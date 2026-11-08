@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ambilKeranjang } from "@/data/keranjang";
 
-const menu = [
+const daftarMenu = [
   { href: "/", teks: "Beranda" },
   { href: "/menu", teks: "Menu" },
   { href: "/favorit", teks: "Favorit" },
@@ -13,20 +15,34 @@ const menu = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const [jumlah, setJumlah] = useState(0);
+
+  useEffect(() => {
+    function hitung() {
+      setJumlah(ambilKeranjang().reduce((total, k) => total + k.jumlah, 0));
+    }
+
+    hitung();
+    window.addEventListener("keranjang-berubah", hitung);
+    return () => window.removeEventListener("keranjang-berubah", hitung);
+  }, []);
+
   return (
-    <nav className="flex items-center gap-6 border-b border-violet-100 bg-violet-50 px-6 py-3">
+    <nav className="flex items-center gap-6 border-b border-violet-100 bg-white px-6 py-3">
       <span className="text-lg font-bold text-violet-700">KantinKu</span>
-      {menu.map((m) => (
+      {daftarMenu.map((m) => (
         <Link
           key={m.href}
           href={m.href}
           className={
             pathname === m.href
-              ? "font-semibold text-violet-700 border-b-2 border-violet-500"
+              ? "border-b-2 border-violet-500 font-semibold text-violet-700"
               : "text-slate-600 hover:text-violet-600"
           }
         >
-          {m.teks}
+          {m.href === "/keranjang" && jumlah > 0
+            ? `Keranjang (${jumlah})`
+            : m.teks}
         </Link>
       ))}
     </nav>

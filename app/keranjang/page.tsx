@@ -8,6 +8,7 @@ import {
   simpanKeranjang,
   type ItemKeranjang,
 } from "@/data/keranjang";
+import { ambilRiwayat, simpanRiwayat, type Pesanan } from "@/data/riwayat";
 
 const MIN_PROMO = 20000;
 const ONGKIR = 2000;
@@ -29,6 +30,9 @@ export default function Keranjang() {
 
   const [cara, setCara] = useState<"ambil" | "antar">("ambil");
   const [kelas, setKelas] = useState("");
+  const [nama, setNama] = useState("");
+  const [galat, setGalat] = useState("");
+  const [struk, setStruk] = useState<Pesanan | null>(null);
 
   useEffect(() => {
     setKeranjang(ambilKeranjang());
@@ -91,11 +95,80 @@ export default function Keranjang() {
   const ongkir = cara === "antar" ? ONGKIR : 0;
   const total = subtotal - diskon + ongkir;
 
+  function pesanSekarang() {
+    const namaBersih = nama.trim();
+    const kelasBersih = kelas.trim();
+
+    if (namaBersih.length < 3) {
+      setGalat("Nama pemesan minimal 3 huruf.");
+      return;
+    }
+    if (cara === "antar" && kelasBersih.length < 3) {
+      setGalat("Kelas wajib diisi, minimal 3 karakter.");
+      return;
+    }
+
+    const pesanan: Pesanan = {
+      id: Date.now(),
+      waktu: new Date().toISOString(),
+      nama: namaBersih,
+      cara,
+      kelas: cara === "antar" ? kelasBersih : "",
+      baris: baris.map(({ k, item }) => ({
+        nama: item!.nama,
+        jumlah: k.jumlah,
+        harga: item!.harga,
+      })),
+      subtotal,
+      diskon,
+      ongkir,
+      total,
+    };
+
+    simpanRiwayat([pesanan, ...ambilRiwayat()]);
+    simpanKeranjang([]);
+
+    setKeranjang([]);
+    setKodeInput("");
+    setPromoAktif(false);
+    setPesanPromo("");
+    setCara("ambil");
+    setKelas("");
+    setNama("");
+    setGalat("");
+    setStruk(pesanan);
+  }
+
   if (!siap) return null;
 
   return (
     <div>
       <h1 className="mb-4 text-2xl font-bold text-violet-700">Keranjang</h1>
+
+      {struk && (
+        <section className="mb-6 rounded-lg border border-violet-200 bg-white p-5">
+          <h2 className="text-lg font-semibold text-violet-700">
+            Terima kasih, {struk.nama}!
+          </h2>
+          <ul className="mt-3 space-y-1">
+            {struk.baris.map((b) => (
+              <li key={b.nama}>
+                {b.nama} x{b.jumlah} = {rupiah(b.harga * b.jumlah)}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-3 space-y-1 border-t border-violet-100 pt-3">
+            <p>Subtotal: {rupiah(struk.subtotal)}</p>
+            {struk.diskon > 0 && <p>Diskon: - {rupiah(struk.diskon)}</p>}
+            <p>
+              {struk.cara === "antar"
+                ? `Ongkir antar ke ${struk.kelas}: ${rupiah(struk.ongkir)}`
+                : "Diambil sendiri di kantin"}
+            </p>
+            <p className="font-semibold">Total bayar: {rupiah(struk.total)}</p>
+          </div>
+        </section>
+      )}
 
       {baris.length === 0 ? (
         <p className="text-slate-500">Keranjang masih kosong.</p>
@@ -112,7 +185,9 @@ export default function Keranjang() {
                 >
                   <div>
                     <p className="font-semibold">{item!.nama}</p>
-                    <p className="text-sm text-slate-500">{rupiah(item!.harga)}</p>
+                    <p className="text-sm text-slate-500">
+                      {rupiah(item!.harga)}
+                    </p>
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -141,7 +216,9 @@ export default function Keranjang() {
                     </button>
                   </div>
 
-                  <p className="font-semibold">{rupiah(item!.harga * k.jumlah)}</p>
+                  <p className="font-semibold">
+                    {rupiah(item!.harga * k.jumlah)}
+                  </p>
 
                   <button
                     onClick={() => hapus(k.id)}
@@ -234,6 +311,23 @@ export default function Keranjang() {
                 </label>
               </fieldset>
 
+              <div>
+                <label className="mb-1 block font-medium" htmlFor="nama">
+                  Nama pemesan
+                </label>
+                <input
+                  id="nama"
+                  type="text"
+                  value={nama}
+                  onChange={(e) => {
+                    setNama(e.target.value);
+                    setGalat("");
+                  }}
+                  placeholder="Nama kamu"
+                  className="w-full rounded border border-violet-200 px-3 py-2 sm:w-64"
+                />
+              </div>
+
               {cara === "antar" && (
                 <div>
                   <label className="mb-1 block font-medium" htmlFor="kelas">
@@ -243,12 +337,30 @@ export default function Keranjang() {
                     id="kelas"
                     type="text"
                     value={kelas}
-                    onChange={(e) => setKelas(e.target.value)}
+                    onChange={(e) => {
+                      setKelas(e.target.value);
+                      setGalat("");
+                    }}
                     placeholder="Contoh: XI RPL 1"
                     className="w-full rounded border border-violet-200 px-3 py-2 sm:w-64"
                   />
                 </div>
               )}
+
+              <div>
+                <button
+                  type="button"
+                  onClick={pesanSekarang}
+                  className="rounded bg-violet-600 px-5 py-2 font-semibold text-white hover:bg-violet-700"
+                >
+                  Pesan sekarang
+                </button>
+                {galat && (
+                  <p className="mt-2 text-sm font-semibold text-red-600">
+                    {galat}
+                  </p>
+                )}
+              </div>
             </div>
           </section>
         </>
