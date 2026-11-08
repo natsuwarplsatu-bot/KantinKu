@@ -9,12 +9,11 @@ export default function FormKeranjang({ item }: { item: Menu }) {
   const [jumlah, setJumlah] = useState(1);
   const [pesan, setPesan] = useState("");
 
-  const mentokAtas = jumlah >= item.stok;
   const mentokBawah = jumlah <= 1;
+  const mentokAtas = jumlah >= item.stok;
 
   function ubahJumlah(nilai: number) {
-    if (Number.isNaN(nilai)) return;
-    setJumlah(Math.min(item.stok, Math.max(1, Math.round(nilai))));
+    setJumlah(nilai);
     setPesan("");
   }
 
@@ -22,7 +21,7 @@ export default function FormKeranjang({ item }: { item: Menu }) {
     e.preventDefault();
     setPesan("");
 
-    if (jumlah < 1 || !Number.isInteger(jumlah)) {
+    if (!Number.isInteger(jumlah) || jumlah < 1) {
       setPesan("Jumlah minimal 1.");
       return;
     }
@@ -33,7 +32,9 @@ export default function FormKeranjang({ item }: { item: Menu }) {
 
     if (jumlah + jumlahDiKeranjang > item.stok) {
       setPesan(
-        `Jumlah melebihi stok. Stok tersedia ${item.stok}, sudah ada ${jumlahDiKeranjang} di keranjang.`
+        jumlahDiKeranjang === 0
+          ? `Jumlah melebihi stok. Stok tersedia ${item.stok}.`
+          : `Jumlah melebihi stok. Stok tersedia ${item.stok}, sudah ada ${jumlahDiKeranjang} di keranjang.`
       );
       return;
     }
@@ -50,14 +51,14 @@ export default function FormKeranjang({ item }: { item: Menu }) {
   }
 
   return (
-    <form onSubmit={tambah} className="mt-4 flex flex-col gap-3">
+    <form onSubmit={tambah} noValidate className="mt-4 flex flex-col gap-3">
       <div className="flex items-center gap-3">
         <span>Jumlah</span>
 
         <div className="flex items-center overflow-hidden rounded border border-violet-200">
           <button
             type="button"
-            onClick={() => ubahJumlah(jumlah - 1)}
+            onClick={() => ubahJumlah(Math.max(1, Math.min(item.stok, jumlah - 1)))}
             disabled={mentokBawah}
             className={
               mentokBawah
@@ -80,7 +81,7 @@ export default function FormKeranjang({ item }: { item: Menu }) {
 
           <button
             type="button"
-            onClick={() => ubahJumlah(jumlah + 1)}
+            onClick={() => ubahJumlah(Math.max(1, Math.min(item.stok, jumlah + 1)))}
             disabled={mentokAtas}
             className={
               mentokAtas
@@ -93,7 +94,9 @@ export default function FormKeranjang({ item }: { item: Menu }) {
         </div>
       </div>
 
-      <p className="font-semibold">Total: {rupiah(item.harga * jumlah)}</p>
+      <p className="font-semibold">
+        Total: {rupiah(item.harga * Math.max(jumlah, 0))}
+      </p>
 
       <button
         type="submit"
