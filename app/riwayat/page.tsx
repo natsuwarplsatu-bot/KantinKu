@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { rupiah } from "@/data/menu";
-import { useRiwayat } from "@/data/riwayat";
+import { simpanRiwayat, useRiwayat } from "@/data/riwayat";
 
 export default function Riwayat() {
   const riwayat = useRiwayat();
+  const [konfirmasi, setKonfirmasi] = useState(false);
 
   const daftar = useMemo(
     () => (riwayat ? [...riwayat].sort((a, b) => b.id - a.id) : []),
@@ -16,6 +17,11 @@ export default function Riwayat() {
 
   const totalBelanja = daftar.reduce((jml, p) => jml + p.total, 0);
 
+  function hapusSemua() {
+    simpanRiwayat([]);
+    setKonfirmasi(false);
+  }
+
   return (
     <div>
       <h1 className="mb-4 text-2xl font-bold text-violet-700">Riwayat</h1>
@@ -24,9 +30,41 @@ export default function Riwayat() {
         <p className="text-slate-500">Belum ada pesanan.</p>
       ) : (
         <>
-          <p className="mb-4 rounded-lg border border-violet-100 bg-white p-3 font-medium">
-            {daftar.length} pesanan, total belanja {rupiah(totalBelanja)}
-          </p>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-violet-100 bg-white p-3">
+            <p className="font-medium">
+              {daftar.length} pesanan, total belanja {rupiah(totalBelanja)}
+            </p>
+
+            {konfirmasi ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-red-600">
+                  Yakin hapus semua riwayat?
+                </span>
+                <button
+                  type="button"
+                  onClick={hapusSemua}
+                  className="rounded bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600"
+                >
+                  Ya, hapus
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setKonfirmasi(false)}
+                  className="rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-100"
+                >
+                  Batal
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setKonfirmasi(true)}
+                className="rounded border border-red-300 px-3 py-1 text-sm text-red-600 hover:bg-red-50"
+              >
+                Hapus riwayat
+              </button>
+            )}
+          </div>
 
           <ul className="space-y-4">
             {daftar.map((p) => (
