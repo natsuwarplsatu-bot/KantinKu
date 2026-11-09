@@ -1,13 +1,11 @@
-
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { menu, rupiah } from "@/data/menu";
 import FormKeranjang from "@/components/FormKeranjang";
+import TombolFavorit from "@/components/TombolFavorit";
 
-export default function DetailPage({
-  params,
-}: PageProps<"/menu/[id]">) {
+export default function DetailPage({ params }: PageProps<"/menu/[id]">) {
   return (
     <Suspense
       fallback={
@@ -27,7 +25,6 @@ async function DetailContent({
   const { id } = await params;
 
   const item = menu.find((m) => m.id === Number(id));
-
   if (!item) notFound();
 
   const terkait = menu.filter(
@@ -42,24 +39,22 @@ async function DetailContent({
 
       <h1 className="mt-2 text-3xl font-bold">{item.nama}</h1>
 
-      <p className="mt-4 text-xl font-semibold">
-        {rupiah(item.harga)}
-      </p>
+      <p className="mt-4 text-xl font-semibold">{rupiah(item.harga)}</p>
 
       <p
         className={
-          item.stok === 0
-            ? "font-semibold text-red-600"
-            : "text-slate-600"
+          item.stok === 0 ? "mt-1 font-semibold text-red-600" : "mt-1 text-slate-600"
         }
       >
         {item.stok === 0 ? "Habis" : `Stok ${item.stok}`}
       </p>
 
+      <div className="mt-5">
+        <TombolFavorit id={item.id} />
+      </div>
+
       {item.stok === 0 ? (
-        <p className="mt-4 font-semibold text-red-600">
-          Menu ini habis.
-        </p>
+        <p className="mt-4 font-semibold text-red-600">Menu ini habis.</p>
       ) : (
         <FormKeranjang item={item} />
       )}
@@ -68,9 +63,7 @@ async function DetailContent({
         <h2 className="text-lg font-semibold">Menu terkait</h2>
 
         {terkait.length === 0 ? (
-          <p className="mt-2 text-slate-500">
-            Belum ada menu terkait.
-          </p>
+          <p className="mt-2 text-slate-500">Belum ada menu terkait.</p>
         ) : (
           <ul className="mt-2 space-y-1">
             {terkait.map((m) => (

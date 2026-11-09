@@ -1,14 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { FormEvent } from "react";
 import { menu, rupiah } from "@/data/menu";
 import {
-  ambilKeranjang,
   simpanKeranjang,
+  useKeranjang,
   type ItemKeranjang,
 } from "@/data/keranjang";
-import { ambilRiwayat, simpanRiwayat, type Pesanan } from "@/data/riwayat";
+import {
+  ambilRiwayat,
+  buatPesanan,
+  simpanRiwayat,
+  type Pesanan,
+} from "@/data/riwayat";
 
 const MIN_PROMO = 20000;
 const ONGKIR = 2000;
@@ -21,8 +26,8 @@ function hitungSubtotal(daftar: ItemKeranjang[]) {
 }
 
 export default function Keranjang() {
-  const [keranjang, setKeranjang] = useState<ItemKeranjang[]>([]);
-  const [siap, setSiap] = useState(false);
+  const dataKeranjang = useKeranjang();
+  const keranjang = dataKeranjang ?? [];
 
   const [kodeInput, setKodeInput] = useState("");
   const [promoAktif, setPromoAktif] = useState(false);
@@ -34,13 +39,7 @@ export default function Keranjang() {
   const [galat, setGalat] = useState("");
   const [struk, setStruk] = useState<Pesanan | null>(null);
 
-  useEffect(() => {
-    setKeranjang(ambilKeranjang());
-    setSiap(true);
-  }, []);
-
   function ubah(baru: ItemKeranjang[]) {
-    setKeranjang(baru);
     simpanKeranjang(baru);
 
     if (promoAktif && hitungSubtotal(baru) < MIN_PROMO) {
@@ -108,9 +107,7 @@ export default function Keranjang() {
       return;
     }
 
-    const pesanan: Pesanan = {
-      id: Date.now(),
-      waktu: new Date().toISOString(),
+    const pesanan = buatPesanan({
       nama: namaBersih,
       cara,
       kelas: cara === "antar" ? kelasBersih : "",
@@ -123,12 +120,11 @@ export default function Keranjang() {
       diskon,
       ongkir,
       total,
-    };
+    });
 
     simpanRiwayat([pesanan, ...ambilRiwayat()]);
     simpanKeranjang([]);
 
-    setKeranjang([]);
     setKodeInput("");
     setPromoAktif(false);
     setPesanPromo("");
@@ -139,7 +135,7 @@ export default function Keranjang() {
     setStruk(pesanan);
   }
 
-  if (!siap) return null;
+  if (dataKeranjang === undefined) return null;
 
   return (
     <div>

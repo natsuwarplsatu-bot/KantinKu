@@ -1,3 +1,5 @@
+import { simpanLokal, useDaftar } from "./penyimpanan";
+
 export type BarisPesanan = { nama: string; jumlah: number; harga: number };
 
 export type Pesanan = {
@@ -17,10 +19,22 @@ const KUNCI = "riwayat";
 
 export function ambilRiwayat(): Pesanan[] {
   if (typeof window === "undefined") return [];
-  const data = localStorage.getItem(KUNCI);
-  return data ? JSON.parse(data) : [];
+  try {
+    return JSON.parse(localStorage.getItem(KUNCI) || "[]");
+  } catch {
+    return [];
+  }
 }
 
 export function simpanRiwayat(daftar: Pesanan[]) {
-  localStorage.setItem(KUNCI, JSON.stringify(daftar));
+  simpanLokal(KUNCI, daftar);
+}
+
+export function useRiwayat() {
+  return useDaftar<Pesanan>(KUNCI);
+}
+
+export function buatPesanan(data: Omit<Pesanan, "id" | "waktu">): Pesanan {
+  const sekarang = new Date();
+  return { ...data, id: sekarang.getTime(), waktu: sekarang.toISOString() };
 }
